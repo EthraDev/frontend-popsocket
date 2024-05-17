@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="header">
+        <div>
+            <h1>POP SOCKET !</h1>
+            <!-- <button id="start" >start</button>-->
+            <p>Your room:</p>
+            <textarea name="" id="roomSelector"></textarea>
+            <button onclick="joinRoom()">Join Room</button>
+            <button onClick="leaveRoom()"> Leave Room </button>
+            <p id="time"></p>
+        </div>
+    </div>
+
+    <section id="theRoom">
+        
+        <div id="quizz">
+            <p class="none" id="start">START GAME</p>
+            <div id="question"></div>
+            <div id="answer"></div>
+        </div>
+
+        <div id="tab">
+            <div id="players">
+                <p>all players:</p>
+                <div id="allScores"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- <p class="data"></p>
+    <button onclick="send()">Refresh</button> -->
+
+</body>
+<script src="./script.js"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"
+    integrity="sha384-2huaZvOR9iDzHqslqwpR87isEmrfxqyWOF7hr7BY6KG0+hVKLoEXMPUJw3ynWuhO"
+    crossorigin="anonymous"></script>
+<script>
+    let i = 0;
+    let room = '';
+    let socketid = '';
+    const text = document.querySelector('#roomSelector');
+    const socket = io('https://backend-popsocket.onrender.com');
+    socket.on('connect', () => {
+        console.log('Connected');
+        socketid = socket.id;
+    });
+    socket.on('message', (data) => {
+        console.log(data);
+        document.querySelector('.data').innerText = data;
+    });
+    socket.on('disconnect', () => {
+        console.log('Disconnected');
+    });
+
+    socket.on('apiData', (data) => {
+        displayQuestion(data);
+        document.querySelector('#start').style.display = "none";
+    });
+
+    socket.on('scores', (scores)=>{
+        let allPlayers = document.querySelector('#allScores');
+        console.log(scores)
+        allPlayers.innerHTML = '';
+        scores.forEach((element) => {
+            allPlayers.innerHTML += `
+            <ul>
+                ${element.key} : ${element.value}
+            </ul> `;
+        });
+    })
+
+    function leaveRoom() {
+        if (room != '') {
+            socket.emit('leave', room);
+            room = '';
+        }
+    }
+    let bt = document.querySelector("#start");
+
+    function joinRoom() {
+        const newRoom = text.value;
+        if (newRoom !== room) {
+            socket.emit('leave', room);
+            socket.emit('join', newRoom);
+            room = newRoom;
+            document.querySelector('#start').value = room;
+            document.querySelector('#theRoom').style.display = "flex";
+            bt.classList.remove("none");
+        }
+    }
+
+    bt.addEventListener("click", function () {
+        bt.classList.add = "none";
+        socket.emit('start', room)
+        //startCountdown(10);
+
+    });
+
+
+</script>
+
+</html>
